@@ -100,13 +100,18 @@ function confirmTransaction() {
   var nextModal = document.getElementById("next-modal");
   nextModal.style.display = "none";
 }
-// Wait for the DOM to be fully loaded
-document.addEventListener('DOMContentLoaded', function() {
+// QR code scanning
+document.addEventListener('DOMContentLoaded', function () {
   const scanQRCodeBtn = document.getElementById('scan-qrcode-btn');
-  scanQRCodeBtn.addEventListener('click', function() {
+  scanQRCodeBtn.addEventListener('click', function () {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      alert('Sorry, your device does not support camera access.');
+      return;
+    }
+
     navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
-      .then(function(stream) {
-        // video element to show the camera stream
+      .then(function (stream) {
+        // Create video element to show the camera stream
         const video = document.createElement('video');
         video.setAttribute('autoplay', '');
         video.setAttribute('playsinline', '');
@@ -125,25 +130,26 @@ document.addEventListener('DOMContentLoaded', function() {
 
           context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-        
           const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
 
-          
           const code = jsQR(imageData.data, imageData.width, imageData.height);
 
-         
           if (code) {
+            // QR code successfully scanned
             console.log('Scanned QR code:', code.data);
             stream.getTracks().forEach(track => track.stop());
             video.remove();
             canvas.remove();
           } else {
+            // QR code not found in the current frame, continue scanning
             requestAnimationFrame(scanQRCode);
           }
         }
+
+        // Start scanning for QR codes
         scanQRCode();
       })
-      .catch(function(error) {
+      .catch(function (error) {
         console.error('Error accessing camera:', error);
       });
   });
